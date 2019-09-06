@@ -23,7 +23,6 @@ def check_infall_masses(file1):
     except:
         print("can't run test")
      
-
 def check_infall_timesteps(file1):
     ''' Check the distribution of infall timesteps'''
     try:
@@ -40,7 +39,6 @@ def check_infall_timesteps(file1):
     except:
         print("can't run test")
 
-    
 def check_positions(file1):
     ''' Check that the positions of the cores look sensible'''
     try:
@@ -72,3 +70,25 @@ def check_central(file1):
     except:
         print("test failed")
     
+
+def check_unique_core_tags(file1):
+    """
+    """
+    
+
+def check_unique_array(array):
+    """Returns true is all the values in the array are unique. False if
+    there are repeating values.
+
+    """
+    u = np.unique(array)
+    return len(u) == len(array)
+
+
+if __name__ == "__main__":
+    file1 = sys.argv[1]
+    check_infall_masses(file1)
+    check_infall_timestep(file1)
+    check_positions(file1)
+    check_central(file1)
+
