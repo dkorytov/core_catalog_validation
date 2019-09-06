@@ -1,0 +1,11 @@
+Check for uniqueness of core tags
+
+FOF_halo_tag + central flag should be unique within file 
+
+Infall_tree_node_index should be unique within file
+
+FOF properties with mass above threshold value should have a core (with the same halo tag)
+
+Merger tree objects at step 499 should have cores (central should have the same tree node index, halo tag, and infall of 499). 
+
+Infall mass must exist!
