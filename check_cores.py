@@ -68,6 +68,15 @@ def check_positions(file1):
         print("can't make plot")
 
 def check_central(file1):
+    ''' Check is currently only for 499 - extend this '''
     try:
         halo_tag = gio.gio_read(file1,'fof_halo_tag')
-
+        infall_step = gio.gio_read(file1,'infall_step')
+        unique_tags, tag_counts = np.unique(halo_tag,return_counts=True)
+        print("maximum number of cores in a halo is " +str(max(tag_counts)))
+        print("number of halos is " + str(len(unique_tags)))
+        unique_tags_central, tag_counts_central = np.unique(halo_tag[infall_step==499],return_counts=True)
+        print("All halos have a central = " + str((np.sort(unique_tags)==np.sort(unique_tags_central)).all()))
+    except:
+        print("can't read file")
+    
