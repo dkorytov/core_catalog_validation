@@ -58,7 +58,7 @@ def check_positions(file1):
     except:
         print("can't run test")
 
-def check_central(file1):
+def check_central(file1,step):
     ''' Check that all halos have a central core. Note: Check is currently only for 499 - extend this '''
     try:
         halo_tag = gio.gio_read(file1,'fof_halo_tag')
@@ -66,9 +66,22 @@ def check_central(file1):
         unique_tags, tag_counts = np.unique(halo_tag,return_counts=True)
         print("maximum number of cores in a halo is " +str(max(tag_counts)))
         print("number of halos is " + str(len(unique_tags)))
-        print("number of centrals at 499 is " + str(np.sum(infall_step==499)))
-        unique_tags_central, tag_counts_central = np.unique(halo_tag[infall_step==499],return_counts=True)
+        print("number of centrals at "+str(step)+" is " + str(np.sum(infall_step==step)))
+        unique_tags_central, tag_counts_central = np.unique(halo_tag[infall_step==step],return_counts=True)
         print("All halos have a central = " + str((np.sort(unique_tags)==np.sort(unique_tags_central)).all()))
     except:
         print("test failed")
-    
+
+def check_mt_files(file1,file_mt):
+    ''' look at how many fof halos we have above threshold '''
+    try:
+        halo_tag = gio.gio_read(file_mt,'fof_halo_tag')
+        halo_mass = gio.gio_read(file_mt,'fof_halo_mass')
+        halo_tag_c = gio.gio_read(file1,'fof_halo_tag')
+        infall_step = gio.gio_read(file1,'infall_step')
+        halo_tag_c=halo_tag_c[infall_step==499]
+        print(len(halo_tag),len(halo_tag_c))
+    except:
+        print("test_failed")
+ 
+# positions of cores that exist at one timestep and not the next
