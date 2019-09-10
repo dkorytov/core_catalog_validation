@@ -16,7 +16,12 @@ import genericio as gio
 vis = True
 
 def check_infall_masses(file1):
-    ''' Check how many particles make up the minimum infall mass, and plot the distribution '''
+    ''' Check how many particles make up the minimum infall mass, and plot the distribution 
+        criteria: minimum infall mass > 0 (this is effectively a sanity check on mass assignment)
+        inputs: file1 = core catalog file 
+        outputs: criteria (pass=0)
+        plots: histogram of log10(mass)
+    '''
     try:
         infall_mass = gio.gio_read(file1,'infall_mass')
         criteria  = (np.min(infall_mass)>0)
@@ -37,7 +42,13 @@ def check_infall_masses(file1):
 
      
 def check_infall_timesteps(file1):
-    ''' Check the distribution of infall timesteps'''
+    ''' Check the distribution of infall steps
+        criteria: minimum infall step > 0 (sanity check on time step assignment)
+        inputs: file1 = core catalog file 
+        outputs: criteria (pass=0)
+        plots: histogram of infall time step
+        display: list of unique infall time steps
+    '''
     try:
         infall_step = gio.gio_read(file1,'infall_step')
         criteria  = (np.min(infall_step)>0)
@@ -58,7 +69,14 @@ def check_infall_timesteps(file1):
         print("can't run infall timestep test")
         return 1
 
-def check_nan_in_positions(label, array):
+def _check_nan_in_positions(label, array):
+    ''' Check for non-finite values in position arrays
+        criteria: only finite values exist
+        inputs: label - x,y,z label
+                array - position array
+        outputs: criteria (pass=0)
+        display: minimum/maximum values and percentage of non-finite values
+    '''
     num_non_finite = np.sum(~np.isfinite(array))
     criteria = (num_non_finite==0)
     min_val = np.min(array)
@@ -72,15 +90,21 @@ def check_nan_in_positions(label, array):
         return 1
 
 def check_positions(file1):
-    ''' Check that the positions of the cores look sensible'''
+    ''' Check that the positions of the cores look sensible
+        criteria: _check_nan_in_positions test passess for all position variables 
+        inputs: file1 = core catalog file
+        outputs: criteria (pass=0)
+        plot: 1d histogram of x,y,z values, 2d histogram of (x,y) values
+        display: output of _check_nan_in_positions test
+    '''
     try:
         test = 0
         x = gio.gio_read(file1,'x').flatten()
         y = gio.gio_read(file1,'y').flatten()
         z = gio.gio_read(file1,'z').flatten()
-        test += check_nan_in_positions('x', x)
-        test += check_nan_in_positions('y', y)
-        test += check_nan_in_positions('z', z)
+        test += _check_nan_in_positions('x', x)
+        test += _check_nan_in_positions('y', y)
+        test += _check_nan_in_positions('z', z)
         if vis:
             plt.figure()
             plt.hist(x,bins=100,alpha=0.4)
@@ -97,7 +121,14 @@ def check_positions(file1):
         print("can't run position test")
 
 def check_central(file1,step):
-    ''' Check that all halos have a central core. Note: Check is currently only for 499 - extend this '''
+    ''' Check that all halos have a central core
+        criteria: a core with infall step = current step exists for all fof halos
+        inputs: file1 = core catalog file
+                step = time step associated with core catalog file 
+        outputs: criteria (pass=0)
+        display: Maximum number of cores in a halo
+                 Total number of fof halos in file
+    '''
     try:
         halo_tag = gio.gio_read(file1,'fof_halo_tag')
         infall_step = gio.gio_read(file1,'infall_step')
@@ -114,10 +145,60 @@ def check_central(file1,step):
             return 1
     except:
         print("test failed")
+        
+def _is_unique_array(array):
+    ''' Check array for uniqueness
+        outputs: True if array is unique, False otherwise
+    '''
+    u = np.unique(array)
+    return len(u) == len(array)
+
+        
+def check_unique_core_tags(file1):
+    ''' Check that core tags and infall tree nodes are unique
+        criteria: no repeating core tags or infall tree nodes
+        inputs: file1 = core catalog file
+        outputs: criteria (pass=0)
+        display: Uniqueness of core tag and infall tree node
+    '''
+    try:
+        core_tag = gio.gio_read(file1, "core_tag")
+        infall_tree_node_index = gio.gio_read(file1, "infall_tree_node_index")
+        core_tag_unique = _is_unique_array(core_tag)
+        tree_node_unique = _is_unique_array(infall_tree_node_index)
+        if core_tag_unique:
+            print("Core tag is unique")
+        else:
+            print("Core tag is not unique")
+        if tree_node_unique:
+            print("Infall tree node index is unique")
+        else: 
+            print("Infall tree node index is not unique")
+        if core_tag_unique&tree_node_unique:
+            return 0
+        else: 
+            return 1
+    except:
+        print("test failed")
+
+
 
 
 def check_mt_files(file1,file_mt,step):
-    ''' look at how many fof halos we have above threshold '''
+    ''' Check that the number of halos in the merger tree file is consistent with the number of central cores
+        criteria: number of halos in MT file and number of central cores agree to within 10%
+        inputs: file1 = core catalog file
+                file_mt = merger tree file 
+                step = current time step
+        outputs: criteria (pass=0)
+        display: Number of halos in merger tree file 
+                 Number of central cores in core file
+        option: plot_missing
+                if plot_missing, then print out the number of 'missing objects', check 
+                how many of these have zero-masses, and plot the positions of the first 
+                10,000 objects. (note at step=499 this shows boundary issues, at higher 
+                redshifts this shows fragments)
+    '''
     try:
         plot_missing = False # useful to turn on if step = 499, so you can see if all missing objects are at mass resolution
         if (step!=499):
@@ -156,7 +237,16 @@ def check_mt_files(file1,file_mt,step):
         print("test_failed")
  
 def check_core_evolution(file1,file2):
-    ''' '''
+    ''' Check that core tags present in an earlier timestep are retained in the later timestep
+        criteria: less than 5% of the core tags present in the earlier timestep are missing in the later step
+        inputs: file1 = core catalog file
+                file2 = core catalog file at lower step number (higher redshift) 
+        outputs: criteria (pass=0)
+        display: Percentage of cores present in earlier timestep missing in subsequent timestep 
+        option: plot_missing
+                if plot_missing, then print out the number of 'missing objects', and plot the 
+                positions of the first 10,000 objects alongside a core density map for comparison. 
+    '''
     try:
         plot_missing = False
         core_tag1 = gio.gio_read(file1, "core_tag")
@@ -193,36 +283,6 @@ def check_core_evolution(file1,file2):
     except:
         print("test_failed")   
 
-def check_unique_core_tags(file1):
-    """
-    """
-    try:
-        core_tag = gio.gio_read(file1, "core_tag")
-        infall_tree_node_index = gio.gio_read(file1, "infall_tree_node_index")
-        core_tag_unique = is_unique_array(core_tag)
-        tree_node_unique = is_unique_array(infall_tree_node_index)
-        if core_tag_unique:
-            print("Core tag is unique")
-        else:
-            print("Core tag is not unique")
-        if tree_node_unique:
-            print("Infall tree node index is unique")
-        else: 
-            print("Infall tree node index is not unique")
-        if core_tag_unique&tree_node_unique:
-            return 0
-        else: 
-            return 1
-    except:
-        print("test failed")
-
-def is_unique_array(array):
-    """Returns true is all the values in the array are unique. False if
-    there are repeating values.
-
-    """
-    u = np.unique(array)
-    return len(u) == len(array)
 
 
 if __name__ == "__main__":
