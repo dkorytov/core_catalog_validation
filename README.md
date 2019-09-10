@@ -5,6 +5,8 @@ This validation suite performs a number of sanity checks on core catalog outputs
 
 ## Usage: 
 python check_cores.py time_step1 time_step2
+
+For individual test documentation see the doc strings in check_cores.py
  
 Note that you may need to update the paths to genericio.py and to the core catalog outputs in the check_cores.py file. The default points to the location of the most up-to-date core catalogs on datastar as of 09/10/19. 
 
