@@ -1,10 +1,15 @@
 # core_catalog_validation
 Validation for the Core Catalog
 
-Usage: 
-python check_cores.py time_step1 time_step2
+This validation suite performs a number of sanity checks on core catalog outputs. These include confirmation of uniqueness of identifiers, distributions of positions and infall quantities, consistency checks between adjacent timesteps and against merger tree files, and appropriate assignation of the central flag.   
 
-Example output: python check_cores.py 88 86
+# Usage: 
+python check_cores.py time_step1 time_step2
+ 
+Note that you may need to update the paths to genericio.py and to the core catalog outputs in the check_cores.py file. The default points to the location of the most up-to-date core catalogs on datastar as of 09/10/19. 
+
+
+# Example output: python check_cores.py 88 86
 
 Minimum infall mass has positive value: 21.0 particles
 List of infall steps:
