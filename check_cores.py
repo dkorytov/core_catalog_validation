@@ -333,8 +333,22 @@ def check_unique_core_tags(file1):
     except:
         print("test failed")
 
-
-
+def check_heirarchy(file1):
+    '''
+    Check that host core tag is within the same tree node index as the core tag. 
+    Check that infall step of the host is higher than infall step of the core
+    '''
+    
+    core_tag = gio.gio_read(file1, "core_tag")
+    host_core_tag = gio.gio_read(file1, "host_core")
+    vals,ar1,ar2 = np.intersect1d(core_tag, host_core_tag, assume_unique=False, return_indices=True)     
+    tni = gio.gio_read(file1,'tree_node_index')
+    infall_step = gio.gio_read(file1,'infall_step')
+    if (tni[ar1]==tni[ar2]).all()&(infall_step[ar1]>infall_step[ar2]).all():
+        return 
+    else:
+       print(np.sum(tni[ar1]!=tni[ar2]),np.sum(infall_step[ar1]<=infall_step[ar2]))
+       return 1
 
 def check_mt_files(file1,file_mt,step):
     ''' Check that the number of halos in the merger tree file is consistent with the number of central cores
@@ -556,6 +570,8 @@ if __name__ == "__main__":
         base_name = '/media/luna1/prlarsen/core_catalog_0.2/09_03_2019.AQ.'
     elif opt=='new':
         base_name='/media/luna1/prlarsen/core_stuff/sep11/core_catalog/09_03_2019.AQ.'
+    elif opt=='merge':
+        base_name = '/media/luna1/prlarsen/core_stuff/oct3/core_catalog_merg/09_03_2019.AQ.'
     else:
         base_name = '/media/luna1/prlarsen/core_stuff/09_03_2019.AQ.' 
     base_name_mt = '/media/luna1/prlarsen/core_stuff/output/09_03_2019.AQ.'
@@ -564,7 +580,9 @@ if __name__ == "__main__":
     file1 = base_name+step+'.coreproperties'
     file_mt = base_name_mt +step+'.treenodes'
     file_ev = base_name + step2 + '.coreproperties'
+    check_heirarchy(file1)
 
+    stop
     test = 0
     norm_mass(file1)
     dndmu(file1)
